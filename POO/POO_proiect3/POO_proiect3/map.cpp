@@ -9,10 +9,9 @@ using namespace std;
 Map::Map(string mapa){
     ifstream fin(mapa);
     if(!fin.is_open()){
-        cout << "Error: could not open file " << mapa << endl;
-        return;
-}
-    height=0;
+        throw runtime_error("Could not open map file: " + mapa);        return;
+    }
+    height=0;   
     string line;
     while(getline(fin,line)){
     grid.push_back(vector<char>(line.begin(), line.end()));       

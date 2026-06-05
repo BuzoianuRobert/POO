@@ -24,29 +24,43 @@ void Game::run(){
     }
     if(!running){
         system("cls");
+        if(!player->getLives()){
+            cout<<"YOU'RE DEAD!!!!"<<endl;
+            cout<<"Press ant key to exit"<<endl;
+            _getch();
+        }
+        else
+            {        
         cout << "You escaped the dungeon! You WIN!" << endl;
         cout << "Press any key to exit..." << endl;
         _getch();
     }
+    }
 }
 
 void Game::init(){
-    harta = make_unique<Map>("mapa.txt");
-    player = make_unique<Player>(3, 2, 100, 10, 2, "$", "Hero", 3, 100);
-    mobs.push_back(MonsterFactory::create("Flamanzean", 26, 6));
-    mobs.push_back(MonsterFactory::create("Flamanzean", 20, 7));
-    mobs.push_back(MonsterFactory::create("Flamanzean", 30,11));
-    mobs.push_back(MonsterFactory::create("Flamanzean", 29, 13));
+    try{
 
-    mobs.push_back(MonsterFactory::create("Cersetor", 20, 10));
-    mobs.push_back(MonsterFactory::create("Flamanzean", 9, 12));
-    groundItems.push_back({5, 2, ItemFactory::create("Weapon", "Briceag", "X", 15, "A sharp sword")});
-    groundItems.push_back({7, 2, ItemFactory::create("Potion", "Ciucas", "B", 15, "A tasty beer")});
-    groundItems.push_back({15,8 , ItemFactory::create("Potion", "Ciucas", "B", 15, "A tasty beer")});
-    groundItems.push_back({16, 11, ItemFactory::create("Potion", "Ciucas", "B", 15, "A tasty beer")});
-    groundItems.push_back({9, 12, ItemFactory::create("Potion", "Ciucas", "B", 15, "A tasty beer")});
-    groundItems.push_back({10, 3, ItemFactory::create("Potion", "Ciucas", "B", 15, "A tasty beer")});
+        harta = make_unique<Map>("mapa.txt");
+        player = make_unique<Player>(3, 2, 100, 10, 2, "$", "Hero", 3, 100);
+        mobs.push_back(MonsterFactory::create("Flamanzean", 26, 6));
+        mobs.push_back(MonsterFactory::create("Flamanzean", 20, 7));
+        mobs.push_back(MonsterFactory::create("Flamanzean", 30,11));
+        mobs.push_back(MonsterFactory::create("Flamanzean", 29, 13));
 
+        mobs.push_back(MonsterFactory::create("Cersetor", 20, 10));
+        mobs.push_back(MonsterFactory::create("Flamanzean", 9, 12));
+        groundItems.push_back({5, 2, ItemFactory::create("Weapon", "Briceag", "X", 15, "A sharp sword")});
+        groundItems.push_back({7, 2, ItemFactory::create("Potion", "Ciucas", "B", 15, "A tasty beer")});
+        groundItems.push_back({15,8 , ItemFactory::create("Potion", "Ciucas", "B", 15, "A tasty beer")});
+        groundItems.push_back({16, 11, ItemFactory::create("Potion", "Ciucas", "B", 15, "A tasty beer")});
+        groundItems.push_back({9, 12, ItemFactory::create("Potion", "Ciucas", "B", 15, "A tasty beer")});
+        groundItems.push_back({10, 3, ItemFactory::create("Potion", "Ciucas", "B", 15, "A tasty beer")});
+    }
+        catch(runtime_error& e){
+        cout << "Failed to initialize game: " << e.what() << endl;
+        running = false;
+    }
 }
 void Game::showMenu(){
     cout<<"============================="<<endl;
@@ -56,21 +70,34 @@ void Game::showMenu(){
     cout<<"4. Use Item"<<endl;
     cout<<"5. Exit"<<endl;
     cout<<"=============================="<<endl;
-    cout<<endl;
-    cout<<endl;
-    cout<<endl;
+    
     int choise;
     cout<<"Your choise: ";
     do{
-        cin>>choise;
-        switch(choise){
-            case 1: running = true; return;
-            case 2:player->getStats();break;
-            case 3:player->getInventory().display();break;
-            case 4:
-            case 5:running = false;break;
+        try{
+            cin >> choise;
+            if(cin.fail())
+                throw invalid_argument("Please enter a number between 1 and 5!");
+            if(choise < 1 || choise > 5)
+                throw out_of_range("Choice must be between 1 and 5!");
+            
+            switch(choise){
+                case 1: running = true; return;
+                case 2: player->getStats(); break;
+                case 3: player->getInventory().display(); break;
+                case 4: break;
+                case 5: running = false; break;
+            }
         }
-    }while(choise !=5);
+        catch(invalid_argument& e){
+            cin.clear();
+            cin.ignore();
+            cout << "Invalid input: " << e.what() << endl;
+        }
+        catch(out_of_range& e){
+            cout << "Invalid choice: " << e.what() << endl;
+        }
+    }while(choise != 5);
 }
 
 void Game::keyboardInput(){
@@ -132,6 +159,8 @@ case 'd':{
 void Game::update(){
     player->updateState();
     checkStairs();
+    if(!player->getLives())
+        running = false;
     if(!running) 
         return;
     for(auto& mob: mobs){
@@ -184,7 +213,7 @@ vector<string> stats = {
     "=========================",
     "   Ramnicean's STATS   ",
     "=========================",
-    "  HP  : " + to_string(player->getHealth()),
+    " HP  : " + to_string(player->getHealth()),
     " DMG : " + to_string(player->getDamage()),
     " SPD : " + to_string(player->getSpeed()),
     " LVS : " + to_string(player->getLives()),
@@ -207,13 +236,13 @@ stats.push_back(" L    = quit      ");
 stats.push_back(" > = Dungeon's exit");
 stats.push_back("=========================");
 stats.push_back("Entities:");
-stats.push_back("$ = Your character");
-stats.push_back("C = Cersetor(enemy)");
-stats.push_back(" F = Flamanzean(enemy)");
+stats.push_back(" $ = Your character");
+stats.push_back(" C = Cersetor(enemy)");
+stats.push_back("  F = Flamanzean(enemy)");
 stats.push_back("=========================");
 stats.push_back(" Items:");
-stats.push_back(" X = Briceag");
-stats.push_back(" B = Ciucas");
+stats.push_back("  X = Briceag");
+stats.push_back("  B = Ciucas");
 
  auto& grid = harta->getGrid();
 for(int i = 0; i < (int)grid.size(); i++){
